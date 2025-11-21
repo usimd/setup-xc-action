@@ -1,6 +1,6 @@
 name: 'Setup Microchip XC Compiler'
 description: 'Download and install Microchip XC compilers (xc8, xc16, xc32) for Linux on GitHub Actions Ubuntu runners'
-author: 'usimd'
+author: Simon Domke
 branding:
   icon: 'download'
   color: 'blue'
@@ -24,6 +24,6 @@ outputs:
     description: 'Full path to the compiler binary directory'
 
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'dist/index.js'
 

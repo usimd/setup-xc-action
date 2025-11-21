@@ -20,7 +20,7 @@ const REQUIRED_PACKAGES = [
 /**
  * Checks if a package is installed
  */
-async function isPackageInstalled(packageName: string): Promise<boolean> {
+export async function isPackageInstalled(packageName: string): Promise<boolean> {
   try {
     const result = await exec.getExecOutput('dpkg', ['-l', packageName], {
       silent: true,
@@ -36,7 +36,7 @@ async function isPackageInstalled(packageName: string): Promise<boolean> {
  * Installs required 32-bit prerequisites for 64-bit systems
  * Required for Microchip XC compilers on Ubuntu 64-bit
  */
-async function installPrerequisites(): Promise<void> {
+export async function installPrerequisites(): Promise<void> {
   core.info('Checking for required 32-bit libraries...')
 
   const missingPackages: string[] = []
@@ -244,4 +244,7 @@ export async function run(): Promise<void> {
   }
 }
 
-run()
+// Only run if this file is being executed directly (not imported for testing)
+if (require.main === module) {
+  run()
+}
