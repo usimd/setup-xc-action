@@ -37,43 +37,48 @@ export async function isPackageInstalled(packageName: string): Promise<boolean> 
  * Required for Microchip XC compilers on Ubuntu 64-bit
  */
 export async function installPrerequisites(): Promise<void> {
-  core.info('Checking for required 32-bit libraries...')
-
-  const missingPackages: string[] = []
-  for (const pkg of REQUIRED_PACKAGES) {
-    const installed = await isPackageInstalled(pkg)
-    if (!installed) {
-      missingPackages.push(pkg)
-    }
-  }
-
-  if (missingPackages.length === 0) {
-    core.info('✅ All required packages are already installed')
-    return
-  }
-
-  core.info(`Installing missing packages: ${missingPackages.join(', ')}`)
-
+  core.startGroup('📦 Installing prerequisites')
   try {
-    // Enable i386 architecture if not already enabled
-    core.info('Enabling i386 architecture...')
-    await exec.exec('sudo', ['dpkg', '--add-architecture', 'i386'], { silent: true })
+    core.info('Checking for required 32-bit libraries...')
 
-    // Update package lists
-    core.info('Updating package lists...')
-    await exec.exec('sudo', ['apt-get', 'update', '-qq'], { silent: true })
+    const missingPackages: string[] = []
+    for (const pkg of REQUIRED_PACKAGES) {
+      const installed = await isPackageInstalled(pkg)
+      if (!installed) {
+        missingPackages.push(pkg)
+      }
+    }
 
-    // Install missing packages
-    core.info('Installing 32-bit prerequisites...')
-    await exec.exec('sudo', ['apt-get', 'install', '-y', '-qq', ...missingPackages], {
-      silent: true
-    })
+    if (missingPackages.length === 0) {
+      core.info('✅ All required packages are already installed')
+      return
+    }
 
-    core.info('✅ Prerequisites installed successfully')
-  } catch (error) {
-    throw new Error(
-      `Failed to install prerequisites: ${error instanceof Error ? error.message : String(error)}`
-    )
+    core.info(`Installing missing packages: ${missingPackages.join(', ')}`)
+
+    try {
+      // Enable i386 architecture if not already enabled
+      core.info('Enabling i386 architecture...')
+      await exec.exec('sudo', ['dpkg', '--add-architecture', 'i386'], { silent: true })
+
+      // Update package lists
+      core.info('Updating package lists...')
+      await exec.exec('sudo', ['apt-get', 'update', '-qq'], { silent: true })
+
+      // Install missing packages
+      core.info('Installing 32-bit prerequisites...')
+      await exec.exec('sudo', ['apt-get', 'install', '-y', '-qq', ...missingPackages], {
+        silent: true
+      })
+
+      core.info('✅ Prerequisites installed successfully')
+    } catch (error) {
+      throw new Error(
+        `Failed to install prerequisites: ${error instanceof Error ? error.message : String(error)}`
+      )
+    }
+  } finally {
+    core.endGroup()
   }
 }
 
@@ -165,17 +170,20 @@ export async function run(): Promise<void> {
     core.info(`Download URL: ${downloadUrl}`)
 
     // Download the installer
-    core.info('Downloading installer...')
+    core.startGroup('⬇️ Downloading installer')
     let installerPath: string
     try {
+      core.info('Downloading installer...')
       installerPath = await tc.downloadTool(downloadUrl)
-      core.info(`Downloaded to: ${installerPath}`)
+      core.info(`✅ Downloaded to: ${installerPath}`)
     } catch (error) {
       throw new Error(
         `Failed to download installer from ${downloadUrl}. ` +
           `Please verify that version ${version} exists for ${compiler}. ` +
           `Error: ${error instanceof Error ? error.message : String(error)}`
       )
+    } finally {
+      core.endGroup()
     }
 
     // Make installer executable
@@ -183,57 +191,82 @@ export async function run(): Promise<void> {
 
     // Prepare installation directory
     const compilerPath = getCompilerPath(installDir, compiler, version)
-    core.info(`Installing to: ${compilerPath}`)
 
-    // Create installation directory if it doesn't exist (use sudo for system directories)
-    if (!fs.existsSync(installDir)) {
-      core.info(`Creating installation directory: ${installDir}`)
-      await exec.exec('sudo', ['mkdir', '-p', installDir])
-      // Set permissions to allow GitHub Actions runner to access
-      await exec.exec('sudo', ['chmod', '755', installDir])
-    }
-
-    // Run the installer in unattended mode with sudo (required by Microchip installers)
-    // Microchip installers support --mode unattended and --prefix for installation path
-    core.info('Running installer with sudo...')
-    const installOptions = {
-      silent: false,
-      ignoreReturnCode: false
-    }
-
+    core.startGroup('🔧 Installing compiler')
     try {
-      await exec.exec(
-        'sudo',
-        [
-          installerPath,
-          '--mode',
-          'unattended',
-          '--netservername',
-          'localhost',
-          '--prefix',
-          compilerPath
-        ],
-        installOptions
-      )
+      core.info(`Installing to: ${compilerPath}`)
+
+      // Create installation directory if it doesn't exist (use sudo for system directories)
+      if (!fs.existsSync(installDir)) {
+        core.info(`Creating installation directory: ${installDir}`)
+        await exec.exec('sudo', ['mkdir', '-p', installDir])
+        // Set permissions to allow GitHub Actions runner to access
+        await exec.exec('sudo', ['chmod', '755', installDir])
+      }
+
+      // Run the installer in unattended mode with sudo (required by Microchip installers)
+      // Microchip installers support --mode unattended and --prefix for installation path
+      core.info('Running installer with sudo...')
+      const installOptions = {
+        silent: false,
+        ignoreReturnCode: false
+      }
+
+      try {
+        await exec.exec(
+          'sudo',
+          [
+            installerPath,
+            '--mode',
+            'unattended',
+            '--netservername',
+            'localhost',
+            '--prefix',
+            compilerPath
+          ],
+          installOptions
+        )
+      } catch (error) {
+        throw new Error(
+          `Installation failed. The installer may require sudo privileges or ` +
+            `the version may not be available. Error: ${error instanceof Error ? error.message : String(error)}`
+        )
+      }
+
+      core.info('✅ Installation completed')
+
+      // Verify installation
+      const binPath = getBinPath(compilerPath)
+      if (!fs.existsSync(binPath)) {
+        throw new Error(`Installation verification failed: bin directory not found at ${binPath}`)
+      }
+    } finally {
+      core.endGroup()
+    }
+
+    // Fix permissions before caching (installer runs as sudo, so files are owned by root)
+    core.startGroup('💾 Caching compiler')
+    try {
+      core.info('Fixing permissions for caching...')
+      const currentUser = process.env.USER || 'runner'
+      await exec.exec('sudo', ['chown', '-R', `${currentUser}:${currentUser}`, compilerPath], {
+        silent: true
+      })
+
+      // Cache the installed compiler for future runs
+      core.info('Caching compiler for future runs...')
+      const cachedToolPath = await tc.cacheDir(compilerPath, compiler, version)
+      core.info(`✅ Cached to: ${cachedToolPath}`)
     } catch (error) {
-      throw new Error(
-        `Installation failed. The installer may require sudo privileges or ` +
-          `the version may not be available. Error: ${error instanceof Error ? error.message : String(error)}`
+      // Don't fail the action if caching fails, just log a warning
+      core.warning(
+        `Failed to cache compiler (non-critical): ${error instanceof Error ? error.message : String(error)}`
       )
+    } finally {
+      core.endGroup()
     }
 
-    core.info('Installation completed')
-
-    // Verify installation
     const binPath = getBinPath(compilerPath)
-    if (!fs.existsSync(binPath)) {
-      throw new Error(`Installation verification failed: bin directory not found at ${binPath}`)
-    }
-
-    // Cache the installed compiler for future runs
-    core.info('Caching compiler for future runs...')
-    const cachedToolPath = await tc.cacheDir(compilerPath, compiler, version)
-    core.info(`Cached to: ${cachedToolPath}`)
 
     // Add to PATH
     core.addPath(binPath)

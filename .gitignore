@@ -45,3 +45,4 @@ pids
 # Optional eslint cache
 .eslintcache
 
+.idea
