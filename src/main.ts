@@ -66,7 +66,7 @@ export async function installPrerequisites(): Promise<void> {
     // Install missing packages
     core.info('Installing 32-bit prerequisites...')
     await exec.exec('sudo', ['apt-get', 'install', '-y', '-qq', ...missingPackages], {
-      silent: false
+      silent: true
     })
 
     core.info('✅ Prerequisites installed successfully')
@@ -204,7 +204,15 @@ export async function run(): Promise<void> {
     try {
       await exec.exec(
         'sudo',
-        [installerPath, '--mode', 'unattended', '--netservername', 'localhost', '--prefix', compilerPath],
+        [
+          installerPath,
+          '--mode',
+          'unattended',
+          '--netservername',
+          'localhost',
+          '--prefix',
+          compilerPath
+        ],
         installOptions
       )
     } catch (error) {

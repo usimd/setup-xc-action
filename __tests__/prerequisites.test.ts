@@ -94,7 +94,7 @@ describe('Prerequisites Installation', () => {
       expect(mockExec).toHaveBeenCalledWith(
         'sudo',
         expect.arrayContaining(['apt-get', 'install', '-y', '-qq']),
-        { silent: false }
+        { silent: true }
       )
     })
     it('should throw error when installation fails', async () => {
