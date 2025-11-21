@@ -132,7 +132,7 @@ jobs:
         include:
           - compiler: 'xc8'
             version: '3.10'
-            binary: 'xc8'
+            binary: 'xc8-cc'
           - compiler: 'xc16'
             version: '2.10'
             binary: 'xc16-gcc'
