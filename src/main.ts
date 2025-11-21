@@ -185,14 +185,17 @@ export async function run(): Promise<void> {
     const compilerPath = getCompilerPath(installDir, compiler, version)
     core.info(`Installing to: ${compilerPath}`)
 
-    // Create installation directory if it doesn't exist
+    // Create installation directory if it doesn't exist (use sudo for system directories)
     if (!fs.existsSync(installDir)) {
-      fs.mkdirSync(installDir, { recursive: true })
+      core.info(`Creating installation directory: ${installDir}`)
+      await exec.exec('sudo', ['mkdir', '-p', installDir])
+      // Set permissions to allow GitHub Actions runner to access
+      await exec.exec('sudo', ['chmod', '755', installDir])
     }
 
-    // Run the installer in unattended mode
+    // Run the installer in unattended mode with sudo (required by Microchip installers)
     // Microchip installers support --mode unattended and --prefix for installation path
-    core.info('Running installer...')
+    core.info('Running installer with sudo...')
     const installOptions = {
       silent: false,
       ignoreReturnCode: false
@@ -200,8 +203,8 @@ export async function run(): Promise<void> {
 
     try {
       await exec.exec(
-        installerPath,
-        ['--mode', 'unattended', '--netservername', 'localhost', '--prefix', compilerPath],
+        'sudo',
+        [installerPath, '--mode', 'unattended', '--netservername', 'localhost', '--prefix', compilerPath],
         installOptions
       )
     } catch (error) {
