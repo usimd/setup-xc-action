@@ -11,7 +11,18 @@ jobs:
     runs-on: ubuntu-latest
     name: Test XC8 Installation
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build action
+        run: npm run build
 
       - name: Setup XC8 Compiler
         uses: ./
@@ -28,7 +39,18 @@ jobs:
     runs-on: ubuntu-latest
     name: Test XC16 Installation
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build action
+        run: npm run build
 
       - name: Setup XC16 Compiler
         uses: ./
@@ -45,7 +67,18 @@ jobs:
     runs-on: ubuntu-latest
     name: Test XC32 Installation
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build action
+        run: npm run build
 
       - name: Setup XC32 Compiler
         uses: ./
@@ -62,7 +95,18 @@ jobs:
     runs-on: ubuntu-latest
     name: Test Custom Installation Directory
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build action
+        run: npm run build
 
       - name: Setup XC8 with Custom Directory
         id: setup-xc8
@@ -96,7 +140,18 @@ jobs:
             version: '5.00'
             binary: 'xc32-gcc'
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build action
+        run: npm run build
 
       - name: Setup ${{ matrix.compiler }}
         uses: ./
