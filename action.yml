@@ -1,0 +1,29 @@
+name: 'Setup Microchip XC Compiler'
+description: 'Download and install Microchip XC compilers (xc8, xc16, xc32) for Linux on GitHub Actions Ubuntu runners'
+author: 'usimd'
+branding:
+  icon: 'download'
+  color: 'blue'
+
+inputs:
+  compiler:
+    description: 'Compiler type to install (xc8, xc16, or xc32)'
+    required: true
+  version:
+    description: 'Compiler version to install (e.g., 3.10 for xc8, 2.10 for xc16, 5.00 for xc32)'
+    required: true
+  install-dir:
+    description: 'Installation directory for the compiler'
+    required: false
+    default: '/opt/microchip'
+
+outputs:
+  install-dir:
+    description: 'Directory where the compiler was installed'
+  compiler-path:
+    description: 'Full path to the compiler binary directory'
+
+runs:
+  using: 'node20'
+  main: 'dist/index.js'
+

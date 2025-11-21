@@ -1,0 +1,112 @@
+name: Example Workflow
+          ${{ matrix.binary }} --version
+          which ${{ matrix.binary }}
+        run: |
+      - name: Verify Installation
+      
+          version: ${{ matrix.version }}
+          compiler: ${{ matrix.compiler }}
+        with:
+        uses: ./
+      - name: Setup ${{ matrix.compiler }}
+      
+      - uses: actions/checkout@v4
+    steps:
+    
+            binary: 'xc32-gcc'
+            version: '5.00'
+          - compiler: 'xc32'
+            binary: 'xc16-gcc'
+            version: '2.10'
+          - compiler: 'xc16'
+            binary: 'xc8'
+            version: '3.10'
+          - compiler: 'xc8'
+        include:
+        compiler: ['xc8', 'xc16', 'xc32']
+      matrix:
+    strategy:
+    name: Test Matrix Build
+    runs-on: ubuntu-latest
+  test-matrix:
+
+          test -d "${{ steps.setup-xc8.outputs.compiler-path }}"
+          test -d "${{ steps.setup-xc8.outputs.install-dir }}"
+          echo "Compiler path: ${{ steps.setup-xc8.outputs.compiler-path }}"
+          echo "Install directory: ${{ steps.setup-xc8.outputs.install-dir }}"
+        run: |
+      - name: Verify Custom Directory
+      
+          install-dir: '/usr/local/microchip'
+          version: '3.10'
+          compiler: 'xc8'
+        with:
+        uses: ./
+        id: setup-xc8
+      - name: Setup XC8 with Custom Directory
+      
+      - uses: actions/checkout@v4
+    steps:
+    name: Test Custom Installation Directory
+    runs-on: ubuntu-latest
+  test-custom-dir:
+
+          xc32-gcc --version
+          which xc32-gcc
+        run: |
+      - name: Verify XC32 Installation
+      
+          version: '5.00'
+          compiler: 'xc32'
+        with:
+        uses: ./
+      - name: Setup XC32 Compiler
+      
+      - uses: actions/checkout@v4
+    steps:
+    name: Test XC32 Installation
+    runs-on: ubuntu-latest
+  test-xc32:
+
+          xc16-gcc --version
+          which xc16-gcc
+        run: |
+      - name: Verify XC16 Installation
+      
+          version: '2.10'
+          compiler: 'xc16'
+        with:
+        uses: ./
+      - name: Setup XC16 Compiler
+      
+      - uses: actions/checkout@v4
+    steps:
+    name: Test XC16 Installation
+    runs-on: ubuntu-latest
+  test-xc16:
+
+          xc8 --version
+          which xc8
+        run: |
+      - name: Verify XC8 Installation
+      
+          version: '3.10'
+          compiler: 'xc8'
+        with:
+        uses: ./
+      - name: Setup XC8 Compiler
+      
+      - uses: actions/checkout@v4
+    steps:
+    name: Test XC8 Installation
+    runs-on: ubuntu-latest
+  test-xc8:
+jobs:
+
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  push:
+on:
+
+
