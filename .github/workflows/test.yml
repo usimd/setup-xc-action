@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Test XC8 Installation
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup XC8 Compiler
         uses: ./
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Test XC16 Installation
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup XC16 Compiler
         uses: ./
@@ -45,7 +45,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Test XC32 Installation
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup XC32 Compiler
         uses: ./
@@ -62,7 +62,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Test Custom Installation Directory
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup XC8 with Custom Directory
         id: setup-xc8
@@ -96,7 +96,7 @@ jobs:
             version: '5.00'
             binary: 'xc32-gcc'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup ${{ matrix.compiler }}
         uses: ./
