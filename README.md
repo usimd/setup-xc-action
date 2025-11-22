@@ -24,7 +24,7 @@ A GitHub Action to download and install Microchip XC compilers (xc8, xc16, xc32)
 
 ```yaml
 steps:
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v6
   
   - name: Setup XC8 Compiler
     uses: usimd/setup-xc-action@v1
@@ -34,7 +34,7 @@ steps:
   
   - name: Build with XC8
     run: |
-      xc8 --version
+      xc8-cc --version
       # Your build commands here
 ```
 
@@ -42,7 +42,7 @@ steps:
 
 ```yaml
 steps:
-  - uses: actions/checkout@v4
+  - uses: actions/checkout@v6
   
   - name: Setup XC8
     uses: usimd/setup-xc-action@v1
@@ -90,36 +90,6 @@ steps:
     run: |
       echo "Installed at: ${{ steps.setup-xc8.outputs.install-dir }}"
       echo "Compiler path: ${{ steps.setup-xc8.outputs.compiler-path }}"
-```
-
-### Matrix Build with Multiple Versions
-
-```yaml
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        compiler: ['xc8', 'xc16', 'xc32']
-        include:
-          - compiler: 'xc8'
-            version: '3.10'
-          - compiler: 'xc16'
-            version: '2.10'
-          - compiler: 'xc32'
-            version: '5.00'
-    
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Setup ${{ matrix.compiler }}
-        uses: usimd/setup-xc-action@v1
-        with:
-          compiler: ${{ matrix.compiler }}
-          version: ${{ matrix.version }}
-      
-      - name: Verify Installation
-        run: ${{ matrix.compiler }} --version
 ```
 
 ## Inputs
@@ -193,9 +163,3 @@ MIT
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Acknowledgments
-
-- Built with [GitHub Actions Toolkit](https://github.com/actions/toolkit)
-- Microchip for providing the XC compilers
-
