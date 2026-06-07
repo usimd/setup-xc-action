@@ -1,6 +1,6 @@
 import eslint from '@eslint/js'
 import tseslint from 'typescript-eslint'
-import jestPlugin from 'eslint-plugin-jest'
+import vitestPlugin from '@vitest/eslint-plugin'
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -26,9 +26,11 @@ export default tseslint.config(
   },
   {
     files: ['__tests__/**/*.ts'],
-    ...jestPlugin.configs['flat/recommended'],
+    plugins: {
+      vitest: vitestPlugin
+    },
     rules: {
-      ...jestPlugin.configs['flat/recommended'].rules,
+      ...vitestPlugin.configs.recommended.rules,
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': [
         'error',

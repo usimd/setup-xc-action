@@ -2,30 +2,25 @@ import * as exec from '@actions/exec'
 import * as core from '@actions/core'
 import { isPackageInstalled, installPrerequisites } from '../src/main'
 // Mock the dependencies
-jest.mock('@actions/exec')
-jest.mock('@actions/core')
+vi.mock('@actions/exec')
+vi.mock('@actions/core')
 describe('Prerequisites Installation', () => {
-  beforeEach(() => {
-    jest.clearAllMocks()
-  })
   describe('isPackageInstalled', () => {
     it('should return true when package is installed', async () => {
-      const mockGetExecOutput = exec.getExecOutput as jest.MockedFunction<typeof exec.getExecOutput>
-      mockGetExecOutput.mockResolvedValue({
+      vi.mocked(exec.getExecOutput).mockResolvedValue({
         exitCode: 0,
         stdout: 'ii  libc6:i386  2.31-0ubuntu9',
         stderr: ''
       })
       const result = await isPackageInstalled('libc6:i386')
       expect(result).toBe(true)
-      expect(mockGetExecOutput).toHaveBeenCalledWith('dpkg', ['-l', 'libc6:i386'], {
+      expect(vi.mocked(exec.getExecOutput)).toHaveBeenCalledWith('dpkg', ['-l', 'libc6:i386'], {
         silent: true,
         ignoreReturnCode: true
       })
     })
     it('should return false when package is not installed', async () => {
-      const mockGetExecOutput = exec.getExecOutput as jest.MockedFunction<typeof exec.getExecOutput>
-      mockGetExecOutput.mockResolvedValue({
+      vi.mocked(exec.getExecOutput).mockResolvedValue({
         exitCode: 1,
         stdout: 'dpkg-query: no packages found matching',
         stderr: ''
@@ -34,8 +29,7 @@ describe('Prerequisites Installation', () => {
       expect(result).toBe(false)
     })
     it('should return false when exitCode is 0 but package state is not "ii"', async () => {
-      const mockGetExecOutput = exec.getExecOutput as jest.MockedFunction<typeof exec.getExecOutput>
-      mockGetExecOutput.mockResolvedValue({
+      vi.mocked(exec.getExecOutput).mockResolvedValue({
         exitCode: 0,
         stdout: 'rc  libc6:i386  (removed)',
         stderr: ''
@@ -44,33 +38,26 @@ describe('Prerequisites Installation', () => {
       expect(result).toBe(false)
     })
     it('should return false on error', async () => {
-      const mockGetExecOutput = exec.getExecOutput as jest.MockedFunction<typeof exec.getExecOutput>
-      mockGetExecOutput.mockRejectedValue(new Error('Command failed'))
+      vi.mocked(exec.getExecOutput).mockRejectedValue(new Error('Command failed'))
       const result = await isPackageInstalled('libc6:i386')
       expect(result).toBe(false)
     })
   })
   describe('installPrerequisites', () => {
     it('should skip installation when all packages are already installed', async () => {
-      const mockGetExecOutput = exec.getExecOutput as jest.MockedFunction<typeof exec.getExecOutput>
-      const mockExec = exec.exec as jest.MockedFunction<typeof exec.exec>
-      const mockInfo = core.info as jest.MockedFunction<typeof core.info>
-      mockGetExecOutput.mockResolvedValue({
+      vi.mocked(exec.getExecOutput).mockResolvedValue({
         exitCode: 0,
         stdout: 'ii  package',
         stderr: ''
       })
       await installPrerequisites()
-      expect(mockInfo).toHaveBeenCalledWith('Checking for required 32-bit libraries...')
-      expect(mockInfo).toHaveBeenCalledWith('✅ All required packages are already installed')
-      expect(mockExec).not.toHaveBeenCalled()
+      expect(vi.mocked(core.info)).toHaveBeenCalledWith('Checking for required 32-bit libraries...')
+      expect(vi.mocked(core.info)).toHaveBeenCalledWith('✅ All required packages are already installed')
+      expect(vi.mocked(exec.exec)).not.toHaveBeenCalled()
     })
     it('should install missing packages', async () => {
-      const mockGetExecOutput = exec.getExecOutput as jest.MockedFunction<typeof exec.getExecOutput>
-      const mockExec = exec.exec as jest.MockedFunction<typeof exec.exec>
-      const mockInfo = core.info as jest.MockedFunction<typeof core.info>
       // First package not installed, rest installed
-      mockGetExecOutput
+      vi.mocked(exec.getExecOutput)
         .mockResolvedValueOnce({
           exitCode: 1,
           stdout: 'not found',
@@ -81,46 +68,42 @@ describe('Prerequisites Installation', () => {
           stdout: 'ii  package',
           stderr: ''
         })
-      mockExec.mockResolvedValue(0)
+      vi.mocked(exec.exec).mockResolvedValue(0)
       await installPrerequisites()
-      expect(mockInfo).toHaveBeenCalledWith('Checking for required 32-bit libraries...')
-      expect(mockInfo).toHaveBeenCalledWith(expect.stringContaining('Installing missing packages:'))
-      expect(mockExec).toHaveBeenCalledWith('sudo', ['dpkg', '--add-architecture', 'i386'], {
+      expect(vi.mocked(core.info)).toHaveBeenCalledWith('Checking for required 32-bit libraries...')
+      expect(vi.mocked(core.info)).toHaveBeenCalledWith(expect.stringContaining('Installing missing packages:'))
+      expect(vi.mocked(exec.exec)).toHaveBeenCalledWith('sudo', ['dpkg', '--add-architecture', 'i386'], {
         silent: true
       })
-      expect(mockExec).toHaveBeenCalledWith('sudo', ['apt-get', 'update', '-qq'], {
+      expect(vi.mocked(exec.exec)).toHaveBeenCalledWith('sudo', ['apt-get', 'update', '-qq'], {
         silent: true
       })
-      expect(mockExec).toHaveBeenCalledWith(
+      expect(vi.mocked(exec.exec)).toHaveBeenCalledWith(
         'sudo',
         expect.arrayContaining(['apt-get', 'install', '-y', '-qq']),
         { silent: true }
       )
     })
     it('should throw error when installation fails', async () => {
-      const mockGetExecOutput = exec.getExecOutput as jest.MockedFunction<typeof exec.getExecOutput>
-      const mockExec = exec.exec as jest.MockedFunction<typeof exec.exec>
       // All packages missing
-      mockGetExecOutput.mockResolvedValue({
+      vi.mocked(exec.getExecOutput).mockResolvedValue({
         exitCode: 1,
         stdout: 'not found',
         stderr: ''
       })
-      mockExec.mockRejectedValue(new Error('apt-get failed'))
+      vi.mocked(exec.exec).mockRejectedValue(new Error('apt-get failed'))
       await expect(installPrerequisites()).rejects.toThrow('Failed to install prerequisites')
     })
     it('should install multiple missing packages', async () => {
-      const mockGetExecOutput = exec.getExecOutput as jest.MockedFunction<typeof exec.getExecOutput>
-      const mockExec = exec.exec as jest.MockedFunction<typeof exec.exec>
       // All packages missing
-      mockGetExecOutput.mockResolvedValue({
+      vi.mocked(exec.getExecOutput).mockResolvedValue({
         exitCode: 1,
         stdout: 'not found',
         stderr: ''
       })
-      mockExec.mockResolvedValue(0)
+      vi.mocked(exec.exec).mockResolvedValue(0)
       await installPrerequisites()
-      const installCall = mockExec.mock.calls.find(
+      const installCall = vi.mocked(exec.exec).mock.calls.find(
         call => Array.isArray(call[1]) && call[1].includes('install')
       )
       expect(installCall).toBeDefined()
