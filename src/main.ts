@@ -289,6 +289,7 @@ export async function run(): Promise<void> {
 }
 
 // Only run if this file is being executed directly (not imported for testing)
-if (require.main === module) {
+const isMain = import.meta.url === new URL(process.argv[1], 'file:').href
+if (isMain) {
   run()
 }

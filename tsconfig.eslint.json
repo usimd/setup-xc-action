@@ -3,7 +3,8 @@
   "include": ["src/**/*", "__tests__/**/*"],
   "exclude": ["node_modules"],
   "compilerOptions": {
-    "types": ["node", "vitest/globals"]
+    "types": ["node", "vitest/globals"],
+    "rootDir": "."
   }
 }
 

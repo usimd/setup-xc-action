@@ -2,6 +2,7 @@
   "name": "setup-xc-action",
   "version": "1.0.1",
   "description": "GitHub Action to setup Microchip XC compilers",
+  "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "build": "ncc build src/main.ts -m --no-source-map-register --license licenses.txt",
