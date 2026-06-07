@@ -52,7 +52,9 @@ describe('Prerequisites Installation', () => {
       })
       await installPrerequisites()
       expect(vi.mocked(core.info)).toHaveBeenCalledWith('Checking for required 32-bit libraries...')
-      expect(vi.mocked(core.info)).toHaveBeenCalledWith('✅ All required packages are already installed')
+      expect(vi.mocked(core.info)).toHaveBeenCalledWith(
+        '✅ All required packages are already installed'
+      )
       expect(vi.mocked(exec.exec)).not.toHaveBeenCalled()
     })
     it('should install missing packages', async () => {
@@ -71,10 +73,16 @@ describe('Prerequisites Installation', () => {
       vi.mocked(exec.exec).mockResolvedValue(0)
       await installPrerequisites()
       expect(vi.mocked(core.info)).toHaveBeenCalledWith('Checking for required 32-bit libraries...')
-      expect(vi.mocked(core.info)).toHaveBeenCalledWith(expect.stringContaining('Installing missing packages:'))
-      expect(vi.mocked(exec.exec)).toHaveBeenCalledWith('sudo', ['dpkg', '--add-architecture', 'i386'], {
-        silent: true
-      })
+      expect(vi.mocked(core.info)).toHaveBeenCalledWith(
+        expect.stringContaining('Installing missing packages:')
+      )
+      expect(vi.mocked(exec.exec)).toHaveBeenCalledWith(
+        'sudo',
+        ['dpkg', '--add-architecture', 'i386'],
+        {
+          silent: true
+        }
+      )
       expect(vi.mocked(exec.exec)).toHaveBeenCalledWith('sudo', ['apt-get', 'update', '-qq'], {
         silent: true
       })
@@ -103,9 +111,9 @@ describe('Prerequisites Installation', () => {
       })
       vi.mocked(exec.exec).mockResolvedValue(0)
       await installPrerequisites()
-      const installCall = vi.mocked(exec.exec).mock.calls.find(
-        call => Array.isArray(call[1]) && call[1].includes('install')
-      )
+      const installCall = vi
+        .mocked(exec.exec)
+        .mock.calls.find(call => Array.isArray(call[1]) && call[1].includes('install'))
       expect(installCall).toBeDefined()
       const args = installCall![1] as string[]
       expect(args).toContain('libc6:i386')
