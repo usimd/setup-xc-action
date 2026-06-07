@@ -74,7 +74,8 @@ export async function installPrerequisites(): Promise<void> {
       core.info('✅ Prerequisites installed successfully')
     } catch (error) {
       throw new Error(
-        `Failed to install prerequisites: ${error instanceof Error ? error.message : String(error)}`
+        `Failed to install prerequisites: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error }
       )
     }
   } finally {
@@ -91,7 +92,7 @@ export function getDownloadUrl(compiler: string, version: string): string {
   // Format version for URL (e.g., "3.10" -> "v3.10", "2.10" -> "v2.10")
   const versionStr = `v${version}`
 
-  let installerName = ''
+  let installerName: string
   switch (compilerLower) {
     case 'xc8':
       installerName = `xc8-${versionStr}-full-install-linux-x64-installer.run`
@@ -180,7 +181,8 @@ export async function run(): Promise<void> {
       throw new Error(
         `Failed to download installer from ${downloadUrl}. ` +
           `Please verify that version ${version} exists for ${compiler}. ` +
-          `Error: ${error instanceof Error ? error.message : String(error)}`
+          `Error: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error }
       )
     } finally {
       core.endGroup()
@@ -229,7 +231,8 @@ export async function run(): Promise<void> {
       } catch (error) {
         throw new Error(
           `Installation failed. The installer may require sudo privileges or ` +
-            `the version may not be available. Error: ${error instanceof Error ? error.message : String(error)}`
+            `the version may not be available. Error: ${error instanceof Error ? error.message : String(error)}`,
+          { cause: error }
         )
       }
 
