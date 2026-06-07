@@ -24,11 +24,19 @@ jobs:
 
       - name: Create Pull Request
         if: steps.check.outputs.updated == 'true'
-        uses: peter-evans/create-pull-request@v7
-        with:
-          commit-message: 'chore: update XC compiler test versions'
-          title: 'chore: update XC compiler test versions'
-          body: ${{ steps.check.outputs.summary }}
-          branch: chore/update-compiler-versions
-          delete-branch: true
-          labels: dependencies
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b chore/update-compiler-versions
+          git add .github/workflows/
+          git commit -m "chore: update XC compiler test versions"
+          git push --force origin chore/update-compiler-versions
+          gh pr create \
+            --title "chore: update XC compiler test versions" \
+            --body "${{ steps.check.outputs.summary }}" \
+            --base main \
+            --label dependencies \
+          || gh pr edit chore/update-compiler-versions \
+            --body "${{ steps.check.outputs.summary }}"
