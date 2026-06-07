@@ -1,0 +1,34 @@
+name: Update XC Compiler Versions
+
+on:
+  schedule:
+    - cron: '0 8 * * 1' # Every Monday at 08:00 UTC
+  workflow_dispatch:
+
+jobs:
+  check-versions:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Check for new compiler versions
+        id: check
+        run: uv run scripts/check-compiler-versions.py
+
+      - name: Create Pull Request
+        if: steps.check.outputs.updated == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: 'chore: update XC compiler test versions'
+          title: 'chore: update XC compiler test versions'
+          body: ${{ steps.check.outputs.summary }}
+          branch: chore/update-compiler-versions
+          delete-branch: true
+          labels: dependencies

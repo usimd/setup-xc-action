@@ -84,7 +84,7 @@ jobs:
         uses: ./
         with:
           compiler: 'xc32'
-          version: '5.00'
+          version: '5.10'
 
       - name: Verify XC32 Installation
         run: |
@@ -137,7 +137,7 @@ jobs:
             version: '2.10'
             binary: 'xc16-gcc'
           - compiler: 'xc32'
-            version: '5.00'
+            version: '5.10'
             binary: 'xc32-gcc'
     steps:
       - uses: actions/checkout@v6
