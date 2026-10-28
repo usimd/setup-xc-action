@@ -4,8 +4,8 @@
 # ///
 """
 Checks Microchip's product pages for the latest XC compiler versions and
-updates .github/workflows/test.yml and .github/workflows/ci.yml if any
-have changed.
+appends new versions to the integration-test matrix, and updates the XC8
+smoke-test version in .github/workflows/ci.yml.
 
 Outputs 'updated=true' and a 'summary' to $GITHUB_OUTPUT when changes are made.
 """
@@ -13,7 +13,6 @@ Outputs 'updated=true' and a 'summary' to $GITHUB_OUTPUT when changes are made.
 import os
 import re
 import sys
-import requests
 from pathlib import Path
 
 COMPILERS: dict[str, dict] = {
@@ -31,10 +30,9 @@ COMPILERS: dict[str, dict] = {
     },
 }
 
-WORKFLOW_FILES = [
-    Path(".github/workflows/test.yml"),
-    Path(".github/workflows/ci.yml"),
-]
+TEST_WORKFLOW = Path(".github/workflows/test.yml")
+CI_WORKFLOW = Path(".github/workflows/ci.yml")
+MATRIX_BINARIES = {"xc8": "xc8-cc", "xc16": "xc16-gcc", "xc32": "xc32-gcc"}
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (compatible; version-checker)"
@@ -42,6 +40,8 @@ HEADERS = {
 
 
 def get_latest_version(compiler: str, config: dict) -> str:
+    import requests
+
     resp = requests.get(config["url"], headers=HEADERS, timeout=30)
     resp.raise_for_status()
     match = re.search(config["pattern"], resp.text)
@@ -75,6 +75,40 @@ def update_file(path: Path, latest: dict[str, str]) -> list[str]:
     return changes
 
 
+def update_test_matrix(path: Path, latest: dict[str, str]) -> list[str]:
+    """Append newly discovered versions to the integration-test matrix."""
+    content = path.read_text()
+    include_match = re.search(r"(?m)^        include:\s*$", content)
+    if not include_match:
+        raise ValueError(f"Could not find matrix include section in {path}")
+
+    steps_match = re.search(r"(?m)^    steps:\s*$", content[include_match.end() :])
+    if not steps_match:
+        raise ValueError(f"Could not find matrix steps section in {path}")
+
+    matrix_end = include_match.end() + steps_match.start()
+    changes = []
+
+    for compiler, new_version in latest.items():
+        entry = rf"(?m)^          - compiler: ['\"]{re.escape(compiler)}['\"]\n            version: ['\"]{re.escape(new_version)}['\"]"
+        if re.search(entry, content[include_match.end() : matrix_end]):
+            continue
+
+        binary = MATRIX_BINARIES[compiler]
+        addition = (
+            f"          - compiler: '{compiler}'"
+            f"\n            version: '{new_version}'"
+            f"\n            binary: '{binary}'\n"
+        )
+        content = content[:matrix_end] + addition + content[matrix_end:]
+        matrix_end += len(addition)
+        changes.append(f"{compiler}: added {new_version} to test matrix")
+
+    if changes:
+        path.write_text(content)
+    return changes
+
+
 def set_github_output(key: str, value: str) -> None:
     output_file = os.environ.get("GITHUB_OUTPUT")
     if output_file:
@@ -94,14 +128,12 @@ def main() -> None:
         print(f"  {compiler}: {version}")
         latest[compiler] = version
 
-    all_changes: list[str] = []
-    for workflow_file in WORKFLOW_FILES:
-        if not workflow_file.exists():
-            continue
-        changes = update_file(workflow_file, latest)
-        if changes:
-            print(f"Updated {workflow_file}: {', '.join(changes)}")
-            all_changes.extend(changes)
+    all_changes = update_test_matrix(TEST_WORKFLOW, latest) if TEST_WORKFLOW.exists() else []
+    if CI_WORKFLOW.exists():
+        ci_changes = update_file(CI_WORKFLOW, {"xc8": latest["xc8"]})
+        if ci_changes:
+            print(f"Updated {CI_WORKFLOW}: {', '.join(ci_changes)}")
+            all_changes.extend(ci_changes)
 
     if all_changes:
         # Deduplicate while preserving order

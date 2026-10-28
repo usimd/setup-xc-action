@@ -31,6 +31,9 @@ jobs:
       - name: Run Tests
         run: npm test
 
+      - name: Test compiler version updater
+        run: python3 -m unittest discover -s scripts -p 'test_*.py'
+
       - name: Build
         run: npm run build
 
