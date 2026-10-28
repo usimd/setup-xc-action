@@ -226,12 +226,14 @@ describe('Setup XC Action - Helper Functions', () => {
 })
 
 describe('Installer invocation', () => {
+  const inputs: Record<string, string> = {
+    compiler: 'xc8',
+    version: '3.10',
+    'install-dir': '/opt/microchip'
+  }
+
   beforeEach(() => {
-    const inputs: Record<string, string> = {
-      compiler: 'xc8',
-      version: '4.00',
-      'install-dir': '/opt/microchip'
-    }
+    inputs.version = '3.10'
     vi.mocked(core.getInput).mockImplementation(name => inputs[name] ?? '')
     vi.mocked(exec.getExecOutput).mockResolvedValue({
       exitCode: 0,
@@ -245,7 +247,40 @@ describe('Installer invocation', () => {
     vi.mocked(fs.existsSync).mockReturnValue(true)
   })
 
-  it('uses supported unattended installer arguments', async () => {
+  it('passes the server name required by legacy installers', async () => {
+    await run()
+
+    const installerCall = vi
+      .mocked(exec.getExecOutput)
+      .mock.calls.find(
+        ([command, args]) => command === 'sudo' && args?.[0] === '/tmp/installer.run'
+      )
+    expect(installerCall?.[1]).toEqual([
+      '/tmp/installer.run',
+      '--mode',
+      'unattended',
+      '--netservername',
+      'localhost',
+      '--prefix',
+      '/opt/microchip/xc8/v3.10'
+    ])
+  })
+
+  it('retries without the server name when a newer installer rejects it', async () => {
+    inputs.version = '4.00'
+    for (let index = 0; index < 5; index++) {
+      vi.mocked(exec.getExecOutput).mockResolvedValueOnce({
+        exitCode: 0,
+        stdout: 'ii installed-package',
+        stderr: ''
+      })
+    }
+    vi.mocked(exec.getExecOutput).mockResolvedValueOnce({
+      exitCode: 1,
+      stdout: 'Unknown option: --netservername',
+      stderr: ''
+    })
+
     await run()
 
     const installerCall = vi

@@ -215,11 +215,35 @@ export async function run(): Promise<void> {
       }
 
       try {
-        await exec.exec(
-          'sudo',
-          [installerPath, '--mode', 'unattended', '--prefix', compilerPath],
-          installOptions
-        )
+        const installerArgs = [
+          installerPath,
+          '--mode',
+          'unattended',
+          '--netservername',
+          'localhost',
+          '--prefix',
+          compilerPath
+        ]
+        const installerResult = await exec.getExecOutput('sudo', installerArgs, {
+          silent: false,
+          ignoreReturnCode: true
+        })
+
+        if (installerResult.exitCode !== 0) {
+          const output = `${installerResult.stdout}\n${installerResult.stderr}`
+          if (!output.includes('Unknown option: --netservername')) {
+            throw new Error(
+              `Installer failed with exit code ${installerResult.exitCode}: ${output}`
+            )
+          }
+
+          core.info('Installer does not support --netservername; retrying without it.')
+          await exec.exec(
+            'sudo',
+            [installerPath, '--mode', 'unattended', '--prefix', compilerPath],
+            installOptions
+          )
+        }
       } catch (error) {
         throw new Error(
           `Installation failed. The installer may require sudo privileges or ` +
