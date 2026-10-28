@@ -32,7 +32,7 @@ jobs:
         run: npm test
 
       - name: Test compiler version updater
-        run: python3 -m unittest discover -s scripts -p 'test_*.py'
+        run: python3 -B -m unittest discover -s scripts -p 'test_*.py'
 
       - name: Build
         run: npm run build
