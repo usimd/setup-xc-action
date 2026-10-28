@@ -28,7 +28,7 @@ jobs:
         uses: ./
         with:
           compiler: 'xc8'
-          version: '3.10'
+          version: '4.00'
 
       - name: Verify XC8 Installation
         run: |
@@ -84,7 +84,7 @@ jobs:
         uses: ./
         with:
           compiler: 'xc32'
-          version: '5.10'
+          version: '6.00'
 
       - name: Verify XC32 Installation
         run: |
@@ -113,7 +113,7 @@ jobs:
         uses: ./
         with:
           compiler: 'xc8'
-          version: '3.10'
+          version: '4.00'
           install-dir: '/usr/local/microchip'
 
       - name: Verify Custom Directory
@@ -131,13 +131,13 @@ jobs:
         compiler: ['xc8', 'xc16', 'xc32']
         include:
           - compiler: 'xc8'
-            version: '3.10'
+            version: '4.00'
             binary: 'xc8-cc'
           - compiler: 'xc16'
             version: '2.10'
             binary: 'xc16-gcc'
           - compiler: 'xc32'
-            version: '5.10'
+            version: '6.00'
             binary: 'xc32-gcc'
     steps:
       - uses: actions/checkout@v7

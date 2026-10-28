@@ -58,7 +58,7 @@ jobs:
         uses: ./
         with:
           compiler: 'xc8'
-          version: '3.10'
+          version: '4.00'
 
       - name: Verify XC8
         run: xc8-cc --version
