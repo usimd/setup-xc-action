@@ -217,15 +217,7 @@ export async function run(): Promise<void> {
       try {
         await exec.exec(
           'sudo',
-          [
-            installerPath,
-            '--mode',
-            'unattended',
-            '--netservername',
-            'localhost',
-            '--prefix',
-            compilerPath
-          ],
+          [installerPath, '--mode', 'unattended', '--prefix', compilerPath],
           installOptions
         )
       } catch (error) {

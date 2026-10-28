@@ -1,4 +1,14 @@
-import { getDownloadUrl, getCompilerPath, getBinPath } from '../src/main'
+import * as core from '@actions/core'
+import * as exec from '@actions/exec'
+import * as tc from '@actions/tool-cache'
+import * as fs from 'fs'
+import { getDownloadUrl, getCompilerPath, getBinPath, run } from '../src/main'
+
+vi.mock('@actions/core')
+vi.mock('@actions/exec')
+vi.mock('@actions/tool-cache')
+vi.mock('fs', () => ({ existsSync: vi.fn() }))
+
 describe('Setup XC Action - Helper Functions', () => {
   describe('URL Generation', () => {
     test('should generate correct URL for XC8', () => {
@@ -212,5 +222,43 @@ describe('Setup XC Action - Helper Functions', () => {
       const url = getDownloadUrl('Xc32', '5.00')
       expect(url).toContain('xc32')
     })
+  })
+})
+
+describe('Installer invocation', () => {
+  beforeEach(() => {
+    const inputs: Record<string, string> = {
+      compiler: 'xc8',
+      version: '4.00',
+      'install-dir': '/opt/microchip'
+    }
+    vi.mocked(core.getInput).mockImplementation(name => inputs[name] ?? '')
+    vi.mocked(exec.getExecOutput).mockResolvedValue({
+      exitCode: 0,
+      stdout: 'ii installed-package',
+      stderr: ''
+    })
+    vi.mocked(exec.exec).mockResolvedValue(0)
+    vi.mocked(tc.find).mockReturnValue('')
+    vi.mocked(tc.downloadTool).mockResolvedValue('/tmp/installer.run')
+    vi.mocked(tc.cacheDir).mockResolvedValue('/tmp/tool-cache')
+    vi.mocked(fs.existsSync).mockReturnValue(true)
+  })
+
+  it('uses supported unattended installer arguments', async () => {
+    await run()
+
+    const installerCall = vi
+      .mocked(exec.exec)
+      .mock.calls.find(
+        ([command, args]) => command === 'sudo' && args?.[0] === '/tmp/installer.run'
+      )
+    expect(installerCall?.[1]).toEqual([
+      '/tmp/installer.run',
+      '--mode',
+      'unattended',
+      '--prefix',
+      '/opt/microchip/xc8/v4.00'
+    ])
   })
 })
